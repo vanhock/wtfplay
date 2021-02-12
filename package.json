@@ -9,11 +9,11 @@
   "private": false,
   "scripts": {
     "start": "npm run build && npm run serve",
-    "serve": "node -r dotenv/config build/server.js",
+    "serve": "node -r dotenv/config dist/server.js",
     "build": "npm run clean && npm run build-ts",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
-    "watch-node": "nodemon --inspect -r dotenv/config build/server.js",
-    "clean": "rimraf ./build",
+    "watch-node": "nodemon -r dotenv/config dist/server.js",
+    "clean": "rimraf ./dist",
     "build-ts": "tsc",
     "watch-ts": "tsc -w",
     "eslint": "eslint . --ext .js,.ts",
@@ -21,6 +21,7 @@
     "test": "jest --forceExit --detectOpenHandles --coverage --verbose"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "debug": "^4.3.1",
