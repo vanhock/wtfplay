@@ -1,0 +1,7 @@
+node_modules/
+.idea
+
+# Build products
+build/
+dist/
+tools/
