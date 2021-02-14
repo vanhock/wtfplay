@@ -12,3 +12,5 @@ export const db = {
 export const valveToken = process.env.VALVE_TOKEN || '';
 export const corsUrl = process.env.CORS_URL;
 export const logDirectory = process.env.LOG_DIR;
+
+export const valveRequestTimeout = 1000;

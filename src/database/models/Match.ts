@@ -1,31 +1,26 @@
 import { model, Schema, Document } from 'mongoose';
+import { nanoid } from 'nanoid';
+import Player, { PlayerScheme } from './Player';
+import Game, { GameSchema } from './Game';
 
 export const DOCUMENT_NAME = 'Match';
 export const COLLECTION_NAME = 'matches';
 
 export default interface Match extends Document {
-  accounts: [string];
-  games: [{
-      name: string,
-      id: string,
-      img: string
-  }];
+  players: [Player];
+  games: [Game];
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 const schema = new Schema(
   {
-    accounts: {
+    _id: {
       type: Schema.Types.String,
-      required: true,
-      trim: true,
+      default: () => nanoid(7),
     },
-    games: {
-      type: Schema.Types.String,
-      required: true,
-      trim: true,
-    },
+    players: [PlayerScheme],
+    games: [GameSchema],
     createdAt: {
       type: Date,
       required: false,

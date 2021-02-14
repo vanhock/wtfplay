@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { environment } from 'src/config';
+import { environment } from '../config';
 import {
     InternalErrorResponse,
     NotFoundResponse,

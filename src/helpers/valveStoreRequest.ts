@@ -1,20 +1,15 @@
 import axios from 'axios';
-import { valveToken } from '../config';
 import Logger from '../core/Logger';
 
 const request = (): any => {
   let headers = { 'Content-Type': 'application/json' };
   const a = axios.create({
-    baseURL: 'http://api.steampowered.com/',
+    baseURL: 'http://store.steampowered.com/api/',
     headers,
-    params: {
-      key: valveToken,
-      format: 'json',
-    },
   });
 
   a.interceptors.response.use(
-    (response) => response.data.response,
+    (response) => response.data,
     (error) => {
       Logger.error(error);
       return Promise.reject(error);
@@ -23,6 +18,6 @@ const request = (): any => {
   return a;
 };
 
-const valveRequest = request();
+const valveStoreRequest = request();
 
-export default valveRequest;
+export default valveStoreRequest;

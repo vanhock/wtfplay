@@ -1,12 +1,15 @@
 import express from 'express';
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import { corsUrl, environment } from './config';
 
 import Logger from './core/Logger';
+
 import { NotFoundError, ApiError, InternalError } from './core/ApiError';
+
 import './database'; // initialize database
+
 import routesV1 from './routes/v1/index';
 
 process.on('uncaughtException', (e) => {
