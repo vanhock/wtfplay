@@ -1,0 +1,7 @@
+dist/
+coverage/
+keys/
+logs/
+node_modules/
+*.md
+.idea
