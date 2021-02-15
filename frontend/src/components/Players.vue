@@ -1,6 +1,10 @@
 <template>
   <div class="players">
-    <div class="players-list">
+    <div class="players__instruction" v-if="!playersCount">
+      Don't know what to play  <br />with your friends in Steam? 😔
+      <p><b>👉 Paste profile's links and let's find out! 😍</b></p>
+    </div>
+    <div class="players-list" v-if="playersCount">
       <Player v-for="(player, index) in players" :key="index" v-bind="player" @remove="removePlayer(player)"/>
     </div>
   </div>
@@ -27,9 +31,13 @@ export default {
 
 <style lang="scss" scoped>
 .players {
+  height: 85px;
   margin-top: 25px;
   margin-bottom: 20px;
   overflow-y: hidden;
+  &__instruction {
+    line-height: 22px;
+  }
 }
 .players-list {
   height: 85px;
