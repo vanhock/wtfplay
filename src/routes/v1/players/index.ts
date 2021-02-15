@@ -7,13 +7,12 @@ import PlayerService from '../../../services/PlayerService';
 
 const router = express.Router();
 
-router.get(
+router.post(
   '/',
-  validator(schema.accountUrls, ValidationSource.QUERY),
+  validator(schema.accountUrls),
   asyncHandler(async (req, res) => {
-    const { urls } = req.query;
-    if (typeof urls !== 'string') return;
-    const players = await PlayerService.getPlayers(urls.split(','));
+    const { urls } = req.body;
+    const players = await PlayerService.getPlayers(urls);
     return new SuccessResponse('success', players).send(res);
   }),
 );

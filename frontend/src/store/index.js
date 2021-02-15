@@ -6,6 +6,8 @@ Vue.use(Vuex);
 
 export const SET_LOADING = 'SET_LOADING';
 export const GET_PLAYERS = 'GET_PLAYERS';
+export const REMOVE_PLAYER = 'REMOVE_PLAYER';
+export const CLEAR_PLAYERS = 'CLEAR_PLAYERS';
 
 export default new Vuex.Store({
   state: {
@@ -19,12 +21,13 @@ export default new Vuex.Store({
           ? Array(3 - state.players.length).fill({
               personaname: '',
               avatar: 'user.png',
+              avatarmedium: 'user.png',
               disabled: true,
             })
           : [];
       return [...state.players, ...placeholder];
     },
-    playersCount: (state) => state.players && state.players.length,
+    playersCount: (state) => (state.players && state.players.length) || 0,
     loading: (state) => state.loading,
   },
   mutations: {
@@ -32,17 +35,32 @@ export default new Vuex.Store({
       state.loading = payload;
     },
     [GET_PLAYERS](state, payload) {
-      state.players = payload || [];
+      state.players =
+        [
+          ...state.players,
+          ...payload.filter((p) => !state.players.some(({ steamid }) => steamid === p.steamid)),
+        ] || [];
+    },
+    [REMOVE_PLAYER](state, player) {
+      state.players.splice(state.players.indexOf(player), 1);
+    },
+    [CLEAR_PLAYERS](state) {
+      state.players = [];
     },
   },
   actions: {
     async [GET_PLAYERS]({ commit }, payload) {
       commit(SET_LOADING, true);
-      const players = await api.get('/players', { params: payload });
-      if (!players) return;
-      commit(GET_PLAYERS, players);
-      commit(SET_LOADING, false);
-      return players;
+      try {
+        const players = await api.post('/players/', { urls: payload });
+        if (!players) return;
+        commit(GET_PLAYERS, players);
+        commit(SET_LOADING, false);
+        return players;
+      } catch (e) {
+        commit(SET_LOADING, false);
+        return Promise.reject(e);
+      }
     },
   },
 });

@@ -1,12 +1,12 @@
 <template>
-  <button class="v-button" :type="type" @click="$emit('click')">
+  <button class="v-button-inline" :type="type" @click="$emit('click')">
     <slot />
   </button>
 </template>
 
 <script>
 export default {
-  name: 'VButton',
+  name: 'VButtonInline',
   props: {
     type: {
       type: String,
@@ -18,18 +18,17 @@ export default {
 
 <style lang="scss" scoped>
 @import 'src/assets/styles/mixins';
-.v-button {
+.v-button-inline {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 40px;
   min-width: 110px;
   padding: 0 20px;
-  @include gradient();
   border-radius: 35px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: $colorSecond;
   cursor: pointer;
   will-change: transform;
   transition: transform linear .1s;

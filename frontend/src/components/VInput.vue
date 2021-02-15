@@ -1,6 +1,7 @@
 <template>
   <label class="v-input">
-    <input class="v-input__input" v-model="inputValue" :type="type" :placeholder="placeholder"/>
+    <input ref="input" class="v-input__input" :class="{'v-input_invalid': invalid}" v-model="inputValue" :type="type"
+           :placeholder="placeholder"/>
   </label>
 </template>
 
@@ -17,9 +18,9 @@ export default {
       default: '',
     },
     value: {
-      type: String,
-      required: true,
+      type: String
     },
+    invalid: Boolean
   },
   computed: {
     inputValue: {
@@ -31,6 +32,11 @@ export default {
       },
     },
   },
+  methods: {
+    setFocus() {
+      this.$refs.input.focus()
+    }
+  }
 };
 </script>
 
@@ -42,7 +48,42 @@ export default {
     width: 100%;
     box-sizing: border-box;
     padding: 10px 15px;
+    border-radius: 7px;
+    outline: none;
+    appearance: none;
+    border: 2px solid $colorPrime;
+    @include box-shadow(medium);
+    text-align: center;
     font-size: 16px;
+
+    &[disabled] {
+      background-color: antiquewhite;
+    }
+
+    &.v-input_invalid {
+      animation: shake 0.82s cubic-bezier(.36, .07, .19, .97) both;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      perspective: 1000px;
+    }
+  }
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
   }
 }
 </style>

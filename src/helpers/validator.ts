@@ -19,8 +19,10 @@ export const JoiObjectId = () =>
 
 export const JoiValveUrl = () =>
   Joi.string().custom((value: string, helpers) => {
-    if (!value.includes('https://steamcommunity.com/id/')) return helpers.error('any.invalid');
-    return value;
+    const decodedValue = decodeURIComponent(value);
+    if (!decodedValue.includes('https://steamcommunity.com/id/'))
+      return helpers.error('any.invalid');
+    return decodedValue;
   }, 'Url Endpoint Validation');
 
 export const JoiStringCommaSeparated = () =>

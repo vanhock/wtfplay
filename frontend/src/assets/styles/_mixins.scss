@@ -1,6 +1,6 @@
 @mixin gradient() {
-  background: rgb(127, 0, 255);
-  background: linear-gradient(rgba(127, 0, 255, 1), rgba(225, 0, 255, 1));
+  background: #600cb5;
+  background: linear-gradient(#b70dce, #600cb5);
 }
 
 @mixin box-shadow($intense: null) {

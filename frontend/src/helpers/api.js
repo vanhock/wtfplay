@@ -5,14 +5,11 @@ const request = () => {
   let headers = { 'Content-Type': 'application/json' };
   const a = axios.create({
     baseURL: apiUrl,
-    headers,
-    params: {
-      format: 'json',
-    },
+    headers
   });
 
   a.interceptors.response.use(
-    (response) => response.data.response,
+    (response) => response.data.data,
     (error) => {
       return Promise.reject(error);
     },
