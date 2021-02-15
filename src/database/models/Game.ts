@@ -26,16 +26,7 @@ export const GameSchema = new Schema(
     },
     header_image: {
       type: Schema.Types.String,
-    },
-    categories: {
-      type: Schema.Types.Array,
-    },
-    playtime_2weeks: {
-      type: Schema.Types.Number,
-    },
-    playtime_forever: {
-      type: Schema.Types.Number,
-    },
+    }
   },
   {
     versionKey: false,

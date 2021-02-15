@@ -11,9 +11,23 @@ export const CLEAR_PLAYERS = 'CLEAR_PLAYERS';
 export const CREATE_MATCH = 'CREATE_MATCH';
 export const GET_MATCH = 'GET_MATCH';
 
+const playerPlaceholder = {
+  personaname: '',
+  avatar: 'user.png',
+  avatarmedium: 'user.png',
+  disabled: true,
+};
+
+const gamePlaceholder = {
+  name: '',
+  steam_appid: '',
+  header_image: 'game.png',
+};
+
 export default new Vuex.Store({
   state: {
     players: [],
+    playerUrls: [],
     games: [],
     loading: false,
   },
@@ -21,27 +35,36 @@ export default new Vuex.Store({
     players: (state) => {
       const placeholder =
         !state.players || state.players.length < 3
-          ? Array(3 - state.players.length).fill({
-              personaname: '',
-              avatar: 'user.png',
-              avatarmedium: 'user.png',
-              disabled: true,
-            })
+          ? Array(3 - state.players.length).fill(playerPlaceholder)
           : [];
       return [...state.players, ...placeholder];
     },
+    games: (state) => {
+      const placeholder =
+        !state.games || state.games.length < 3
+          ? Array(3 - state.games.length).fill(gamePlaceholder)
+          : [];
+      return [...state.games, ...placeholder];
+    },
     playersCount: (state) => (state.players && state.players.length) || 0,
+    playerUrls: (state) => state.playerUrls,
+    gamesCount: (state) => (state.games && state.games.length) || 0,
     loading: (state) => state.loading,
   },
   mutations: {
     [SET_LOADING](state, payload) {
       state.loading = payload;
     },
-    [GET_PLAYERS](state, payload) {
+    [GET_PLAYERS](state, { players, urls }) {
       state.players =
         [
           ...state.players,
-          ...payload.filter((p) => !state.players.some(({ steamid }) => steamid === p.steamid)),
+          ...players.filter((p) => !state.players.some(({ steamid }) => steamid === p.steamid)),
+        ] || [];
+      state.playerUrls =
+        [
+          ...state.playerUrls,
+          ...urls.filter((p) => !state.playerUrls.some((link) => link === p)),
         ] || [];
     },
     [REMOVE_PLAYER](state, player) {
@@ -62,7 +85,7 @@ export default new Vuex.Store({
       try {
         const players = await api.post('/players/', { urls: payload });
         if (!players) return;
-        commit(GET_PLAYERS, players);
+        commit(GET_PLAYERS, { players, urls: payload });
         commit(SET_LOADING, false);
         return players;
       } catch (e) {
@@ -70,10 +93,12 @@ export default new Vuex.Store({
         return Promise.reject(e);
       }
     },
-    async [CREATE_MATCH]({ commit }, { urls, start, offset }) {
+    async [CREATE_MATCH]({ commit, state }) {
       commit(SET_LOADING, true);
       try {
-        const response = await api.post('/match/create', { urls, start, offset });
+        const response = await api.post('/match/create', {
+          urls: state.playerUrls
+        });
         commit(GET_MATCH, response);
         commit(SET_LOADING, false);
         return response;
