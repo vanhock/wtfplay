@@ -8,8 +8,6 @@ import Logger from './core/Logger';
 
 import { NotFoundError, ApiError, InternalError } from './core/ApiError';
 
-import './database'; // initialize database
-
 import routesV1 from './routes/v1/index';
 
 process.on('uncaughtException', (e) => {

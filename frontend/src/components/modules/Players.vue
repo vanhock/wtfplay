@@ -1,31 +1,40 @@
 <template>
   <div class="players">
-    <div class="players__instruction" v-if="!playersCount">
-      Don't know what to play  <br />with your friends in Steam? 😔
+    <div class="players__instruction" v-if="!playersCount && !loadingGames">
+      Don't know what to play <br />with your friends in Steam? 😔
       <p><b>👉 Paste profile's links and let's find out! 😍</b></p>
     </div>
     <div class="players-list" v-if="playersCount">
-      <Player v-for="(player, index) in players" :key="index" v-bind="player" @remove="removePlayer(player)"/>
+      <Player
+        v-for="(player, index) in players"
+        :key="player.steamid || index"
+        v-bind="player"
+        @remove="removePlayer(player)"
+        :editable="playersEditable"
+      />
     </div>
   </div>
 </template>
 
 <script>
-import {mapGetters} from 'vuex';
-import Player from "@/components/Player";
-import {REMOVE_PLAYER} from "@/store";
+import { mapGetters } from 'vuex';
+import Player from '@/components/modules/Player';
+import { REMOVE_PLAYER } from '@/store';
 
 export default {
   name: 'Players',
-  components: {Player},
+  components: { Player },
   computed: {
-    ...mapGetters(['players', 'playersCount']),
+    ...mapGetters(['players', 'playersCount', 'gamesCount', 'loadingPlayers', 'loadingGames']),
+    playersEditable() {
+      return !this.loadingPlayers && !this.gamesCount && !this.loadingGames;
+    },
   },
   methods: {
     removePlayer(player) {
       this.$store.commit(REMOVE_PLAYER, player);
     },
-  }
+  },
 };
 </script>
 
@@ -51,6 +60,4 @@ export default {
     margin: 0 auto;
   }
 }
-
-
 </style>

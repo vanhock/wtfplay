@@ -8,13 +8,14 @@ export const SET_LOADING = 'SET_LOADING';
 export const GET_PLAYERS = 'GET_PLAYERS';
 export const REMOVE_PLAYER = 'REMOVE_PLAYER';
 export const CLEAR_PLAYERS = 'CLEAR_PLAYERS';
+export const CLEAR_GAMES = 'CLEAR_GAMES';
 export const CREATE_MATCH = 'CREATE_MATCH';
 export const GET_MATCH = 'GET_MATCH';
 
 const playerPlaceholder = {
   personaname: '',
-  avatar: 'user.png',
-  avatarmedium: 'user.png',
+  avatar: '/user.png',
+  avatarmedium: '/user.png',
   disabled: true,
 };
 
@@ -27,9 +28,9 @@ const gamePlaceholder = {
 export default new Vuex.Store({
   state: {
     players: [],
-    playerUrls: [],
     games: [],
-    loading: false,
+    loadingPlayers: false,
+    loadingGames: false,
   },
   getters: {
     players: (state) => {
@@ -47,24 +48,20 @@ export default new Vuex.Store({
       return [...state.games, ...placeholder];
     },
     playersCount: (state) => (state.players && state.players.length) || 0,
-    playerUrls: (state) => state.playerUrls,
+    playerUrls: (state) => state.players && state.players.map((p) => p.profileurl),
     gamesCount: (state) => (state.games && state.games.length) || 0,
-    loading: (state) => state.loading,
+    loadingGames: (state) => state.loadingGames,
+    loadingPlayers: (state) => state.loadingPlayers,
   },
   mutations: {
-    [SET_LOADING](state, payload) {
-      state.loading = payload;
+    [SET_LOADING](state, { type = 'Players', loading }) {
+      state[`loading${type}`] = loading;
     },
-    [GET_PLAYERS](state, { players, urls }) {
+    [GET_PLAYERS](state, { players }) {
       state.players =
         [
           ...state.players,
           ...players.filter((p) => !state.players.some(({ steamid }) => steamid === p.steamid)),
-        ] || [];
-      state.playerUrls =
-        [
-          ...state.playerUrls,
-          ...urls.filter((p) => !state.playerUrls.some((link) => link === p)),
         ] || [];
     },
     [REMOVE_PLAYER](state, player) {
@@ -72,6 +69,9 @@ export default new Vuex.Store({
     },
     [CLEAR_PLAYERS](state) {
       state.players = [];
+    },
+    [CLEAR_GAMES](state) {
+      state.games = [];
     },
     [GET_MATCH](state, { players, games, link }) {
       if (players) state.players = players;
@@ -81,41 +81,41 @@ export default new Vuex.Store({
   },
   actions: {
     async [GET_PLAYERS]({ commit }, payload) {
-      commit(SET_LOADING, true);
+      commit(SET_LOADING, { type: 'Players', loading: true });
       try {
         const players = await api.post('/players/', { urls: payload });
         if (!players) return;
-        commit(GET_PLAYERS, { players, urls: payload });
-        commit(SET_LOADING, false);
+        commit(GET_PLAYERS, { players });
+        commit(SET_LOADING, { type: 'Players', loading: false });
         return players;
       } catch (e) {
-        commit(SET_LOADING, false);
+        commit(SET_LOADING, { type: 'Players', loading: false });
         return Promise.reject(e);
       }
     },
-    async [CREATE_MATCH]({ commit, state }) {
-      commit(SET_LOADING, true);
+    async [CREATE_MATCH]({ commit, getters }) {
+      commit(SET_LOADING, { type: 'Games', loading: true });
       try {
         const response = await api.post('/match/create', {
-          urls: state.playerUrls
+          urls: getters.playerUrls,
         });
         commit(GET_MATCH, response);
-        commit(SET_LOADING, false);
+        commit(SET_LOADING, { type: 'Games', loading: false });
         return response;
       } catch (e) {
-        commit(SET_LOADING, false);
+        commit(SET_LOADING, { type: 'Games', loading: false });
         return Promise.reject(e);
       }
     },
-    async [GET_MATCH]({ commit }, { id, start, offset, onlyGames }) {
-      commit(SET_LOADING, true);
+    async [GET_MATCH]({ commit }, id) {
+      commit(SET_LOADING, { type: 'Games', loading: true });
       try {
-        const response = await api.get('/match/get', { params: { id, start, offset, onlyGames } });
+        const response = await api.get('/match/get', { params: { id } });
         commit(GET_MATCH, response);
-        commit(SET_LOADING, false);
+        commit(SET_LOADING, { type: 'Games', loading: false });
         return response;
       } catch (e) {
-        commit(SET_LOADING, false);
+        commit(SET_LOADING, { type: 'Games', loading: false });
         return Promise.reject(e);
       }
     },

@@ -3,20 +3,27 @@
     <img class="player__avatar" :src="avatarmedium" :alt="personaname" />
     <div class="player-panel">
       <div class="player-panel__name">{{ personaname }}</div>
-      <div class="player-panel__remove" role="button" data-text="Remove" @click="$emit('remove')"></div>
+      <div
+        v-if="editable"
+        class="player-panel__remove"
+        role="button"
+        data-text="Remove"
+        @click="$emit('remove')"
+      ></div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-name: "Player",
+  name: 'Player',
   props: {
     personaname: String,
     avatarmedium: String,
-    _id: String
-  }
-}
+    _id: String,
+    editable: Boolean,
+  },
+};
 </script>
 
 <style lang="scss" scoped>
@@ -31,7 +38,7 @@ name: "Player",
     height: 50px;
     border-radius: 50%;
   }
-  &:not([disabled]):hover{
+  &:not([disabled]):hover {
     .player-panel {
       display: block;
     }
@@ -70,8 +77,7 @@ name: "Player",
     border-radius: 50%;
     border: 1px solid #fff;
     cursor: pointer;
-    opacity: .7;
-
+    opacity: 0.7;
   }
 }
 </style>

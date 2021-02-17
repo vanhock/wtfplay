@@ -1,7 +1,7 @@
 import Joi from 'joi';
-import {JoiStringCommaSeparated, JoiValveUrl} from "../../../helpers/validator"
+import { JoiStringCommaSeparated, JoiValveUrl } from '../../../helpers/validator';
 export default {
-    accountUrls: Joi.object().keys({
-        urls: JoiStringCommaSeparated().items(JoiValveUrl()).required()
-    }),
-}
+  accountUrls: Joi.object().keys({
+    urls: JoiStringCommaSeparated().items(JoiValveUrl()).required(),
+  }),
+};

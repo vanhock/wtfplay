@@ -1,9 +1,4 @@
-import { Schema, Document } from 'mongoose';
-
-export const DOCUMENT_NAME = 'Game';
-export const COLLECTION_NAME = 'games';
-
-export default interface Game extends Document {
+export default interface Game {
   name: string;
   steam_appid: number;
   short_description: string;
@@ -12,23 +7,3 @@ export default interface Game extends Document {
   playtime_2weeks: number;
   playtime_forever: number;
 }
-
-export const GameSchema = new Schema(
-  {
-    name: {
-      type: Schema.Types.String,
-    },
-    steam_appid: {
-      type: Schema.Types.Number,
-    },
-    short_description: {
-      type: Schema.Types.String,
-    },
-    header_image: {
-      type: Schema.Types.String,
-    }
-  },
-  {
-    versionKey: false,
-  },
-);

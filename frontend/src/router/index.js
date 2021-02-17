@@ -1,19 +1,19 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Home from '@/views/AddPlayers.vue';
+import Home from '@/views/AddPlayersView.vue';
 
 Vue.use(VueRouter);
 
 const routes = [
   {
     path: '/',
-    name: 'Home',
+    name: 'AddPlayers',
     component: Home,
   },
   {
     path: '/m/:id',
-    name: 'About',
-    component: () => import(/* webpackChunkName: "Match" */ '@/views/Match.vue'),
+    name: 'Match',
+    component: () => import(/* webpackChunkName: "Match" */ '@/views/MatchView.vue'),
   },
 ];
 

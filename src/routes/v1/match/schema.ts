@@ -1,11 +1,11 @@
 import Joi from 'joi';
-import {JoiObjectId, JoiStringCommaSeparated, JoiValveUrl} from '../../../helpers/validator';
+import { JoiStringCommaSeparated, JoiValveUrl } from '../../../helpers/validator';
 
 export default {
-    matchId: Joi.object().keys({
-        id: JoiObjectId().required(),
-    }),
-    match: Joi.object().keys({
-        urls: JoiStringCommaSeparated().items(JoiValveUrl()).single().required()
-    }),
-}
+  matchId: Joi.object().keys({
+    id: Joi.string().length(7).required(),
+  }),
+  match: Joi.object().keys({
+    urls: JoiStringCommaSeparated().items(JoiValveUrl()).single().required(),
+  }),
+};

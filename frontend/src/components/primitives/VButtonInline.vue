@@ -17,7 +17,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import 'src/assets/styles/mixins';
+@import '../../assets/styles/mixins';
 .v-button-inline {
   display: flex;
   align-items: center;
@@ -31,9 +31,9 @@ export default {
   color: $colorSecond;
   cursor: pointer;
   will-change: transform;
-  transition: transform linear .1s;
+  transition: transform linear 0.1s;
   &:active {
-    transform: scale(.97);
+    transform: scale(0.97);
   }
 }
 </style>
