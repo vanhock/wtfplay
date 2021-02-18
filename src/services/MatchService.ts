@@ -1,7 +1,7 @@
 import NodeCache from 'node-cache';
 import Bottleneck from 'bottleneck';
 import { nanoid } from 'nanoid';
-import { valveRequestThrottle, cacheConfig, limiterConfig } from '../config';
+import { valveRequestThrottle, cacheConfig, limiterConfig, matchResultLimit } from '../config';
 import valveRequest from '../helpers/valveRequest';
 import valveStoreRequest from '../helpers/valveStoreRequest';
 import { sleep, getYear, removeDuplicates, isMultiplayer } from '../helpers/helpers';
@@ -101,12 +101,14 @@ export default class MatchService {
      * Let's get common games of each player
      **/
 
-    const commonGames = playerGames.slice(1).reduce((result: any, current: any) => {
-      return current.filter((currentItem: GameIds) => {
-        return result.some(({ appid }: GameIds) => appid === currentItem.appid);
-      });
-    }, playerGames[0]);
-    //.filter((g: any, i: any) => i <= 5);
+    const commonGames = playerGames
+      .slice(1)
+      .reduce((result: any, current: any) => {
+        return current.filter((currentItem: GameIds) => {
+          return result.some(({ appid }: GameIds) => appid === currentItem.appid);
+        });
+      }, playerGames[0])
+      .filter((g: any, i: any) => (matchResultLimit ? i <= matchResultLimit : true));
     console.log('commonGames', commonGames);
     /**
      * Now add game details
@@ -124,11 +126,11 @@ export default class MatchService {
     /** Remove cached games from found common games **/
 
     const targetGames = cachedGames.length
-        ? commonGames.filter(
-            (game: any) =>
-                !cachedGames.some(({ steam_appid }) => `${game.appid}` === `${steam_appid}`),
+      ? commonGames.filter(
+          (game: any) =>
+            !cachedGames.some(({ steam_appid }) => `${game.appid}` === `${steam_appid}`),
         )
-        : commonGames;
+      : commonGames;
 
     console.log('targetGames', targetGames.length);
 
@@ -165,8 +167,8 @@ export default class MatchService {
      * Sort games by relevant
      */
     return removedDuplicates
-        .sort((a: any, b: any) => b.playtime_forever - a.playtime_forever)
-        .sort((a: any, b: any) => getYear(b.release_date) - getYear(a.release_date));
+      .sort((a: any, b: any) => b.playtime_forever - a.playtime_forever)
+      .sort((a: any, b: any) => getYear(b.release_date) - getYear(a.release_date));
   }
 
   public static getMatchFromCacheById(id: any): any {

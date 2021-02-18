@@ -22,6 +22,11 @@ export default {
   created() {
     const matchId = this.$router.history.pending && this.$router.history.pending.params.id;
     this.getMatchById(matchId);
+    this.$router.beforeEach((to, from, next) => {
+      if (this.gamesCount) return next()
+      this.getMatchById(to.params.id);
+      next()
+    })
   },
   data: () => ({
     loadingText: [
@@ -41,7 +46,7 @@ export default {
     loadingTextShowDelay: 3000
   }),
   computed: {
-    ...mapGetters(['loadingGames']),
+    ...mapGetters(['loadingGames', "gamesCount"]),
   },
   methods: {
     async getMatchById(matchId) {
@@ -71,9 +76,12 @@ export default {
 }
 
 button {
-  outline: none;
   border: 0;
   appearance: none;
+  outline-color: #ccc;
+  &:active {
+    outline: none;
+  }
 }
 
 [disabled] {

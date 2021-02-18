@@ -1,7 +1,7 @@
 // Mapper for environment variables
 export const environment = process.env.NODE_ENV;
 export const port = process.env.PORT;
-
+export const matchResultLimit = process.env.MATCH_RESULT_LIMIT || 0;
 export const cacheConfig = {
   deleteOnExpire: false,
   useClones: true,

@@ -27,7 +27,7 @@ router.post(
     const { games } = await MatchService.getMatchData(req.body.urls, req);
 
     /** Store urls in-memory **/
-    const id = MatchService.saveMatchToCache(req.body.urls);
+    const { id } = MatchService.saveMatchToCache(req.body.urls);
     console.log('Request was finally end!');
     return new SuccessResponse('success', { games, id }).send(res);
   }),

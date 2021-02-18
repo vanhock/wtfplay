@@ -7,19 +7,21 @@
         <template v-else-if="playersCount > 1">added {{ playersCount }} players</template>
       </div>
       <VInput
-        class="add-players__input"
-        ref="input"
-        v-model="currentValue"
-        placeholder="Paste links of steam profiles..."
-        :invalid="!isInputValid"
-        :disabled="inputDisabled"
+          class="add-players__input"
+          ref="input"
+          v-model="currentValue"
+          placeholder="Paste links of steam profiles..."
+          :invalid="!isInputValid"
+          :disabled="inputDisabled"
       />
       <div class="add-players__buttons">
         <VButtonInline :disabled="!playersCount || loadingPlayers" @click="clearPlayers"
-          >Clear</VButtonInline
+        >Clear
+        </VButtonInline
         >
-        <VButton class="add-players__submit" :disabled="buttonDisabled" @click="findGames"
-          >Find common games</VButton
+        <VButton class="add-players__submit" :disabled="buttonDisabled" @click="setLinks"
+        >Add player
+        </VButton
         >
       </div>
     </template>
@@ -28,15 +30,15 @@
 
 <script>
 import VButton from '@/components/primitives/VButton';
-import { CLEAR_PLAYERS, CREATE_MATCH, GET_PLAYERS } from '@/store';
-import { mapGetters } from 'vuex';
+import {CLEAR_PLAYERS, CREATE_MATCH, GET_PLAYERS} from '@/store';
+import {mapGetters} from 'vuex';
 import VInput from '@/components/primitives/VInput';
-import { debounce } from 'lodash';
+import {debounce} from 'lodash';
 import VButtonInline from '@/components/primitives/VButtonInline';
 
 export default {
   name: 'AddPlayersView',
-  components: { VButtonInline, VInput, VButton },
+  components: {VButtonInline, VInput, VButton},
   mounted() {
     this.focusInput();
   },
@@ -48,7 +50,7 @@ export default {
   computed: {
     ...mapGetters(['players', 'playersCount', 'loadingGames', 'loadingPlayers']),
     buttonDisabled() {
-      return this.playersCount < 2 || this.loadingPlayers;
+      return !this.currentValue
     },
     inputDisabled() {
       return this.loadingPlayers || this.playersCount === 10;
@@ -62,14 +64,16 @@ export default {
   },
   watch: {
     currentValue: debounce(function (value) {
-      this.setLinks(value);
+      console.log('value', value);
     }, 100),
   },
   methods: {
-    async setLinks(value) {
-      if (!value || !value.length) return;
+    async setLinks() {
+      if (!this.currentValue || !this.currentValue || this.playersCount < 2) return;
       this.isInputValid = true;
-      let links = value.includes(',') ? value.trim().split(',') : value.trim().split(' ');
+      let links = this.currentValue.includes(',')
+          ? this.currentValue.trim().split(',')
+          : this.currentValue.trim().split(' ');
       links = links.map((v) => v.trim());
       const isLinksValid = links.every((l) => l.includes('https://steamcommunity.com/id/'));
       if (links && links.length && isLinksValid) {
@@ -85,8 +89,8 @@ export default {
       }
     },
     async findGames() {
-      const { id } = await this.$store.dispatch(CREATE_MATCH);
-      await this.$router.push({ name: 'Match', params: { id: id } });
+      const {id} = await this.$store.dispatch(CREATE_MATCH);
+      await this.$router.push({name: 'Match', params: {id: id}});
     },
     clearPlayers() {
       this.$store.commit(CLEAR_PLAYERS);
