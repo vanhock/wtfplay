@@ -4,7 +4,7 @@ import { Types } from 'mongoose';
 import schema from './schema';
 import asyncHandler from '../../../helpers/asyncHandler';
 import MatchRepo from '../../../database/repository/MatchRepo';
-import { NotFoundError } from '../../../core/ApiError';
+import { NotFoundError, BadRequestError } from '../../../core/ApiError';
 import { SuccessResponse } from '../../../core/ApiResponse';
 import MatchService from '../../../services/MatchService';
 import Match from '../../../database/models/Match';
@@ -47,7 +47,7 @@ router.post(
   '/create',
   validator(schema.match),
   asyncHandler(async (req, res) => {
-    const { players, games } = await getMatchData(req.body.urls);
+    const { games } = await getMatchData(req.body.urls);
 
     /** Store urls in-memory **/
     const { id } = await MatchRepo.create({
@@ -55,7 +55,11 @@ router.post(
     } as Match);
 
     console.log('Request finally end!');
-
+    req.on('close', () => {
+      if (!id) {
+        throw new BadRequestError('Client canceled request');
+      }
+    });
     return new SuccessResponse('success', { games, id }).send(res);
   }),
 );

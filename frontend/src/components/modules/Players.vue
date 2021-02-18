@@ -40,7 +40,7 @@ export default {
 
 <style lang="scss" scoped>
 .players {
-  height: 85px;
+  height: 86px;
   margin-top: 25px;
   margin-bottom: 20px;
   overflow-y: hidden;
@@ -49,7 +49,7 @@ export default {
   }
 }
 .players-list {
-  height: 85px;
+  height: 86px;
   display: flex;
   justify-content: center;
   align-items: center;

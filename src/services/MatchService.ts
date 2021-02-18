@@ -16,10 +16,15 @@ export default class MatchService {
   protected static async getGame(appid: string, playtime_forever: number): Promise<any> {
     let game;
     try {
-      const d: object = await valveStoreRequest.get('/appdetails/', {
+      const d: any = await valveStoreRequest.get('/appdetails/', {
         params: { appids: appid },
       });
-      const { data } = Object.values(d)[0];
+      const data = d && d[`${appid}`].data;
+      if (!data) {
+        /** Store failed response in cache **/
+        memoryCache.set(appid, { steam_appid: appid });
+        return;
+      }
       const dataForSave = {
         name: data.name,
         steam_appid: data.steam_appid,
@@ -41,7 +46,7 @@ export default class MatchService {
     }
   }
 
-  public static async getCommonGames(steamIds: Types.Array<string>, save = false): Promise<any> {
+  public static async getCommonGames(steamIds: Types.Array<string>): Promise<any> {
     if (!steamIds || !steamIds.length) return;
 
     interface Game {
@@ -79,7 +84,7 @@ export default class MatchService {
         return result.some(({ appid }: Game) => appid === currentItem.appid);
       });
     }, playerGames[0]);
-    //.filter((g: any, i: any) => i <= 10);
+    //.filter((g: any, i: any) => i <= 5);
     console.log('commonGames', commonGames);
     /**
      * Now add game details
@@ -89,16 +94,25 @@ export default class MatchService {
 
     let commonGamesWithDetails: any[] = [];
     const cache = memoryCache.mget(commonGames.map(({ appid }: any) => appid)) || [];
+
     /** Get games from cache **/
-    const cachedGames = Object.values(cache).filter((g) => isMultiplayer(g));
+    const cachedGames = Object.values(cache);
+    console.log('Has cached', cachedGames.length);
 
     /** Remove cached games from found common games **/
+
     const targetGames = cachedGames.length
-      ? commonGames.filter((game: any) => cachedGames.indexOf(game) !== -1)
+      ? commonGames.filter(
+          (game: any) =>
+            !cachedGames.some(({ steam_appid }) => `${game.appid}` === `${steam_appid}`),
+        )
       : commonGames;
+
+    console.log('targetGames', targetGames.length);
 
     const addedAppIds: any[] = [];
     /** Loop only games which not in a cache **/
+
     for (const { appid, playtime_forever = 0 } of targetGames) {
       const game = await this.getGame(appid, playtime_forever);
       if (game && addedAppIds.indexOf(game.steam_appid) === -1) {
@@ -108,7 +122,28 @@ export default class MatchService {
       await sleep(valveRequestThrottle);
     }
 
-    commonGamesWithDetails = [...commonGamesWithDetails, ...cachedGames];
+    console.log('commonGamesWithDetails', commonGamesWithDetails);
+
+    commonGamesWithDetails = [
+      ...commonGamesWithDetails,
+      ...cachedGames.filter((g) => isMultiplayer(g)),
+    ];
+
+    /**
+     * Remove duplicates from cached results.
+     * Steam has duplicated games on both appid`s,
+     * for example:
+     * https://store.steampowered.com/api/appdetails/?appids=100
+     * https://store.steampowered.com/api/appdetails/?appids=80
+     **/
+    const removedDuplicates: any = commonGamesWithDetails.reduce((acc: any, current: any) => {
+      const x = acc.find((item: any) => item.steam_appid === current.steam_appid);
+      if (!x) {
+        return acc.concat([current]);
+      } else {
+        return acc;
+      }
+    }, []);
 
     /**
      * Sort games by relevant
@@ -118,8 +153,8 @@ export default class MatchService {
       const m = dateString.match(/(\d{4}|\d{4}\d{4})$/g) || [];
       return (m[0] && parseInt(m[0])) || 0;
     };
-    return commonGamesWithDetails
-      .sort((a, b) => b.playtime_forever - a.playtime_forever)
-      .sort((a, b) => getYear(b.release_date) - getYear(a.release_date));
+    return removedDuplicates
+      .sort((a: any, b: any) => b.playtime_forever - a.playtime_forever)
+      .sort((a: any, b: any) => getYear(b.release_date) - getYear(a.release_date));
   }
 }

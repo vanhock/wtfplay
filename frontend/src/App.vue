@@ -1,27 +1,45 @@
 <template>
   <div id="app">
-    <Logo />
-    <Players />
-    <Preloader v-show="loadingGames" />
-    <router-view />
-    <UpButton />
+    <Logo/>
+    <Players/>
+    <Preloader v-show="loadingGames" :text="loadingText" :text-show-delay="loadingTextShowDelay"
+               :text-delay="loadingTextDelay"/>
+    <router-view/>
+    <UpButton/>
   </div>
 </template>
 
 <script>
 import Players from '@/components/modules/Players';
 import Logo from '@/components/modules/Logo';
-import { GET_MATCH } from '@/store';
+import {GET_MATCH} from '@/store';
 import Preloader from '@/components/primitives/Preloader';
-import { mapGetters } from 'vuex';
+import {mapGetters} from 'vuex';
 import UpButton from '@/components/primitives/UpButton';
 
 export default {
-  components: { UpButton, Preloader, Logo, Players },
+  components: {UpButton, Preloader, Logo, Players},
   created() {
     const matchId = this.$router.history.pending && this.$router.history.pending.params.id;
     this.getMatchById(matchId);
   },
+  data: () => ({
+    loadingText: [
+      "Finding players",
+      "Looking for perks",
+      "Asking Gordon Freemen",
+      "Opening a portal",
+      "Killing zombie",
+      "Planting the bomb",
+      "3",
+      "2",
+      "1",
+      "Boom!",
+      "Almost there",
+    ],
+    loadingTextDelay: 6000,
+    loadingTextShowDelay: 3000
+  }),
   computed: {
     ...mapGetters(['loadingGames']),
   },
@@ -31,7 +49,7 @@ export default {
       try {
         await this.$store.dispatch(GET_MATCH, matchId);
       } catch (e) {
-        await this.$router.push({ name: 'AddPlayers' });
+        await this.$router.push({name: 'AddPlayers'});
       }
     },
   },

@@ -8,18 +8,17 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "start": "npm run build && npm run serve",
+    "start": "node ./dist/server.js",
+    "gcp-build": "tsc -p .",
     "serve": "node -r dotenv/config dist/server.js",
-    "build": "npm run clean && npm run build-ts",
+    "build": "npm i && npm run clean && npm run build-ts",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
     "watch-node": "nodemon --inspect -r dotenv/config dist/server.js",
     "clean": "rimraf ./dist",
-    "debug": "nodemon --inspect-brk=9229 -r dotenv/config src/server.ts",
-    "build-ts": "tsc",
+    "build-ts": "tsc -p .",
     "watch-ts": "tsc -w",
     "eslint": "eslint . --ext .js,.ts",
-    "upgrade": "yarn upgrade -D && yarn upgrade",
-    "test": "jest --forceExit --detectOpenHandles --coverage --verbose"
+    "upgrade": "yarn upgrade -D && yarn upgrade"
   },
   "dependencies": {
     "axios": "^0.21.1",
