@@ -18,13 +18,14 @@ const limiter = new Bottleneck({
   maxConcurrent: 1,
 });
 
-const getMatchData = async (urls: string[]) => {
+const getMatchData = async (urls: string[], req: any) => {
   return await limiter.schedule(async () => {
     console.log('Job starts!');
     const players = await PlayerService.getPlayers(urls);
     if (!players) throw new NotFoundError('Has no players found');
     const games = await MatchService.getCommonGames(
       players.map((player: Player) => player.steamid),
+        req
     );
     console.log('Job end!');
     return { games, players };
@@ -38,7 +39,7 @@ router.get(
     const match = await MatchRepo.findById(req.query.id);
     if (!match) throw new NotFoundError('Has no record with specified id');
     const { urls } = match;
-    const { players, games } = await getMatchData(urls);
+    const { players, games } = await getMatchData(urls, req);
     return new SuccessResponse('success', { players, games }).send(res);
   }),
 );
@@ -47,7 +48,7 @@ router.post(
   '/create',
   validator(schema.match),
   asyncHandler(async (req, res) => {
-    const { games } = await getMatchData(req.body.urls);
+    const { games } = await getMatchData(req.body.urls, req);
 
     /** Store urls in-memory **/
     const { id } = await MatchRepo.create({
@@ -55,11 +56,7 @@ router.post(
     } as Match);
 
     console.log('Request finally end!');
-    req.on('close', () => {
-      if (!id) {
-        throw new BadRequestError('Client canceled request');
-      }
-    });
+
     return new SuccessResponse('success', { games, id }).send(res);
   }),
 );

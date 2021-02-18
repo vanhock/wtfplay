@@ -55,7 +55,9 @@ export default new Vuex.Store({
   },
   mutations: {
     [SET_LOADING](state, { type = 'Players', loading }) {
-      state[`loading${type}`] = loading;
+      !loading
+        ? setTimeout(() => (state[`loading${type}`] = loading), 400)
+        : (state[`loading${type}`] = loading);
     },
     [GET_PLAYERS](state, { players }) {
       state.players =

@@ -2,7 +2,7 @@
   <div id="app">
     <Logo/>
     <Players/>
-    <Preloader v-show="loadingGames" :text="loadingText" :text-show-delay="loadingTextShowDelay"
+    <Preloader v-if="loadingGames" :text="loadingText" :text-show-delay="loadingTextShowDelay"
                :text-delay="loadingTextDelay"/>
     <router-view/>
     <UpButton/>

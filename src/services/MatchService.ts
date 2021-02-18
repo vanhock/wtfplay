@@ -4,6 +4,7 @@ import valveStoreRequest from '../helpers/valveStoreRequest';
 import { sleep } from '../helpers/helpers';
 import { valveRequestThrottle } from '../config';
 import NodeCache from 'node-cache';
+import { BadRequestError } from '../core/ApiError';
 
 const memoryCache = new NodeCache({
   deleteOnExpire: false,
@@ -46,8 +47,14 @@ export default class MatchService {
     }
   }
 
-  public static async getCommonGames(steamIds: Types.Array<string>): Promise<any> {
+  public static async getCommonGames(steamIds: Types.Array<string>, req: any): Promise<any> {
     if (!steamIds || !steamIds.length) return;
+    let isCanceled = false;
+
+    req.on('close', () => {
+      isCanceled = true;
+      throw new BadRequestError('Request end');
+    });
 
     interface Game {
       appid: number;
@@ -114,6 +121,8 @@ export default class MatchService {
     /** Loop only games which not in a cache **/
 
     for (const { appid, playtime_forever = 0 } of targetGames) {
+      if (isCanceled) return;
+      console.log("get game", appid);
       const game = await this.getGame(appid, playtime_forever);
       if (game && addedAppIds.indexOf(game.steam_appid) === -1) {
         commonGamesWithDetails.push(game);

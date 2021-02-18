@@ -1,6 +1,6 @@
 <template>
   <div class="match-view" v-if="gamesCount">
-    <div class="match-view__text">
+    <div class="match-view__text" v-if="!loadingGames">
       <b>🎉 Congratulations! 🎉</b>
       <p>
         We found <b>{{ gamesCount }} {{ gamesCount === 1 ? 'game' : 'games' }}</b> you can play with
@@ -29,7 +29,7 @@ export default {
     copied: false,
   }),
   computed: {
-    ...mapGetters(['gamesCount']),
+    ...mapGetters(['gamesCount', "loadingGames"]),
   },
   methods: {
     copyToClipboard() {
