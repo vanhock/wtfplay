@@ -6,6 +6,7 @@ export default class PlayerService {
     const vaninityUrlsArray =
       urls.map((u: string) => u.replace('https://steamcommunity.com/id/', '').replace('/', '')) ||
       [];
+
     for (const vanityurl of vaninityUrlsArray) {
       try {
         const { steamid } = await valveRequest.get('/ISteamUser/ResolveVanityURL/v0001/', {
@@ -23,6 +24,7 @@ export default class PlayerService {
       const { players } = await valveRequest.get('/ISteamUser/GetPlayerSummaries/v0002/', {
         params: { steamids: steamIdsArray.join(',') },
       });
+
       return players;
     } catch (e) {
       console.error('Error with GetPlayerSummaries', e);

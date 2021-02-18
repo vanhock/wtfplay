@@ -1,9 +1,9 @@
 import express from 'express';
 import asyncHandler from '../../../helpers/asyncHandler';
-import validator, { ValidationSource } from '../../../helpers/validator';
-import schema from './schema';
+import validator from '../../../helpers/validator';
 import { SuccessResponse } from '../../../core/ApiResponse';
 import PlayerService from '../../../services/PlayerService';
+import schema from './schema';
 
 const router = express.Router();
 

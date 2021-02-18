@@ -1,1 +1,1 @@
-## In this I separated logic of the app
+## In these files I separated logic of the app

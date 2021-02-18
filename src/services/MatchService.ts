@@ -1,20 +1,25 @@
-import { Types } from 'mongoose';
+import NodeCache from 'node-cache';
+import Bottleneck from 'bottleneck';
+import { nanoid } from 'nanoid';
+import { valveRequestThrottle, cacheConfig, limiterConfig } from '../config';
 import valveRequest from '../helpers/valveRequest';
 import valveStoreRequest from '../helpers/valveStoreRequest';
-import { sleep } from '../helpers/helpers';
-import { valveRequestThrottle } from '../config';
-import NodeCache from 'node-cache';
-import { BadRequestError } from '../core/ApiError';
+import { sleep, getYear, removeDuplicates, isMultiplayer } from '../helpers/helpers';
+import { BadRequestError, NotFoundError } from '../core/ApiError';
 
-const memoryCache = new NodeCache({
-  deleteOnExpire: false,
-  useClones: false,
-});
-const isMultiplayer = (data: any) =>
-  data && data.categories && data.categories.some((c: { id: number }) => c.id === 1 || c.id === 38);
+import Match from '../models/Match';
+import Game from '../models/Game';
+import Player from '../models/Player';
+import PlayerService from '../services/PlayerService';
+
+const memoryCache = new NodeCache(cacheConfig);
+const limiter = new Bottleneck(limiterConfig);
 
 export default class MatchService {
-  protected static async getGame(appid: string, playtime_forever: number): Promise<any> {
+  protected static async getGame(
+    appid: string,
+    playtime_forever: number,
+  ): Promise<Game | undefined> {
     let game;
     try {
       const d: any = await valveStoreRequest.get('/appdetails/', {
@@ -47,7 +52,17 @@ export default class MatchService {
     }
   }
 
-  public static async getCommonGames(steamIds: Types.Array<string>, req: any): Promise<any> {
+  public static saveMatchToCache(urls: any): Match {
+    const newMatch = {
+      id: nanoid(7),
+      urls: urls,
+      createdAt: new Date(),
+    };
+    memoryCache.set(newMatch.id, newMatch);
+    return newMatch;
+  }
+
+  protected static async getCommonGames(steamIds: any, req: any): Promise<any> {
     if (!steamIds || !steamIds.length) return;
     let isCanceled = false;
 
@@ -56,7 +71,7 @@ export default class MatchService {
       throw new BadRequestError('Request end');
     });
 
-    interface Game {
+    interface GameIds {
       appid: number;
       playtime_forever: number;
     }
@@ -87,8 +102,8 @@ export default class MatchService {
      **/
 
     const commonGames = playerGames.slice(1).reduce((result: any, current: any) => {
-      return current.filter((currentItem: Game) => {
-        return result.some(({ appid }: Game) => appid === currentItem.appid);
+      return current.filter((currentItem: GameIds) => {
+        return result.some(({ appid }: GameIds) => appid === currentItem.appid);
       });
     }, playerGames[0]);
     //.filter((g: any, i: any) => i <= 5);
@@ -100,7 +115,7 @@ export default class MatchService {
     console.log('common games', commonGames.length);
 
     let commonGamesWithDetails: any[] = [];
-    const cache = memoryCache.mget(commonGames.map(({ appid }: any) => appid)) || [];
+    const cache = memoryCache.mget(commonGames.map(({ appid }: GameIds) => appid)) || [];
 
     /** Get games from cache **/
     const cachedGames = Object.values(cache);
@@ -109,20 +124,20 @@ export default class MatchService {
     /** Remove cached games from found common games **/
 
     const targetGames = cachedGames.length
-      ? commonGames.filter(
-          (game: any) =>
-            !cachedGames.some(({ steam_appid }) => `${game.appid}` === `${steam_appid}`),
+        ? commonGames.filter(
+            (game: any) =>
+                !cachedGames.some(({ steam_appid }) => `${game.appid}` === `${steam_appid}`),
         )
-      : commonGames;
+        : commonGames;
 
     console.log('targetGames', targetGames.length);
 
     const addedAppIds: any[] = [];
-    /** Loop only games which not in a cache **/
 
+    /** Loop only games which not in a cache **/
     for (const { appid, playtime_forever = 0 } of targetGames) {
-      if (isCanceled) return;
-      console.log("get game", appid);
+      if (isCanceled) return; // Stop loop on canceled request
+
       const game = await this.getGame(appid, playtime_forever);
       if (game && addedAppIds.indexOf(game.steam_appid) === -1) {
         commonGamesWithDetails.push(game);
@@ -130,8 +145,6 @@ export default class MatchService {
       }
       await sleep(valveRequestThrottle);
     }
-
-    console.log('commonGamesWithDetails', commonGamesWithDetails);
 
     commonGamesWithDetails = [
       ...commonGamesWithDetails,
@@ -145,25 +158,33 @@ export default class MatchService {
      * https://store.steampowered.com/api/appdetails/?appids=100
      * https://store.steampowered.com/api/appdetails/?appids=80
      **/
-    const removedDuplicates: any = commonGamesWithDetails.reduce((acc: any, current: any) => {
-      const x = acc.find((item: any) => item.steam_appid === current.steam_appid);
-      if (!x) {
-        return acc.concat([current]);
-      } else {
-        return acc;
-      }
-    }, []);
+
+    const removedDuplicates = removeDuplicates(commonGamesWithDetails);
 
     /**
      * Sort games by relevant
      */
-    const getYear = (dateObject: any): number => {
-      const dateString = dateObject && dateObject.date;
-      const m = dateString.match(/(\d{4}|\d{4}\d{4})$/g) || [];
-      return (m[0] && parseInt(m[0])) || 0;
-    };
     return removedDuplicates
-      .sort((a: any, b: any) => b.playtime_forever - a.playtime_forever)
-      .sort((a: any, b: any) => getYear(b.release_date) - getYear(a.release_date));
+        .sort((a: any, b: any) => b.playtime_forever - a.playtime_forever)
+        .sort((a: any, b: any) => getYear(b.release_date) - getYear(a.release_date));
+  }
+
+  public static getMatchFromCacheById(id: any): any {
+    return memoryCache.get(id);
+  }
+
+  public static async getMatchData(urls: any, req: any): Promise<any> {
+    return await limiter.schedule(async () => {
+      console.log('Job starts!');
+      const players = await PlayerService.getPlayers(urls);
+      if (!players) throw new NotFoundError('Has no players found');
+
+      const games = await MatchService.getCommonGames(
+        players.map((player: Player) => player.steamid),
+        req,
+      );
+      console.log('Job end!');
+      return { games, players };
+    });
   }
 }
