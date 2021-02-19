@@ -2,8 +2,13 @@
   <div id="app">
     <Logo/>
     <Players/>
-    <Preloader v-if="loadingGames" :text="loadingText" :text-show-delay="loadingTextShowDelay"
-               :text-delay="loadingTextDelay"/>
+    <AddPlayers/>
+    <Preloader
+        v-show="loadingGames || loadingPlayers"
+        :text="loadingText"
+        :text-show-delay="loadingTextShowDelay"
+        :text-delay="loadingTextDelay"
+    />
     <router-view/>
     <UpButton/>
   </div>
@@ -12,41 +17,44 @@
 <script>
 import Players from '@/components/modules/Players';
 import Logo from '@/components/modules/Logo';
-import {GET_MATCH} from '@/store';
+import {GET_MATCH, SET_NAVIGATION_MANUAL} from '@/store';
 import Preloader from '@/components/primitives/Preloader';
 import {mapGetters} from 'vuex';
 import UpButton from '@/components/primitives/UpButton';
+import AddPlayers from '@/components/modules/AddPlayers';
 
 export default {
-  components: {UpButton, Preloader, Logo, Players},
+  components: {AddPlayers, UpButton, Preloader, Logo, Players},
   created() {
-    const matchId = this.$router.history.pending && this.$router.history.pending.params.id;
+    const matchId =
+        (this.$router.history.pending && this.$router.history.pending.params.id) ||
+        this.$route.params.id;
     this.getMatchById(matchId);
     this.$router.beforeEach((to, from, next) => {
-      if (this.gamesCount) return next()
-      this.getMatchById(to.params.id);
-      next()
-    })
+      if (!this.isManualNavigated) this.getMatchById(to.params.id);
+      this.$store.commit(SET_NAVIGATION_MANUAL, false);
+      next();
+    });
   },
   data: () => ({
     loadingText: [
-      "Finding players",
-      "Looking for perks",
-      "Asking Gordon Freemen",
-      "Opening a portal",
-      "Killing zombie",
-      "Planting the bomb",
-      "3",
-      "2",
-      "1",
-      "Boom!",
-      "Almost there",
+      'Finding players',
+      'Looking for perks',
+      'Asking Gordon Freemen',
+      'Opening a portal',
+      'Killing zombie',
+      'Planting the bomb',
+      '3',
+      '2',
+      '1',
+      'Boom!',
+      'Almost there',
     ],
     loadingTextDelay: 6000,
-    loadingTextShowDelay: 3000
+    loadingTextShowDelay: 3000,
   }),
   computed: {
-    ...mapGetters(['loadingGames', "gamesCount"]),
+    ...mapGetters(['loadingGames', 'loadingPlayers', 'gamesCount', 'id', 'isManualNavigated']),
   },
   methods: {
     async getMatchById(matchId) {
@@ -79,6 +87,8 @@ button {
   border: 0;
   appearance: none;
   outline-color: #ccc;
+  box-sizing: border-box;
+
   &:active {
     outline: none;
   }

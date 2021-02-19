@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Home from '@/views/AddPlayersView.vue';
+import MatchView from '@/views/MatchView';
 
 Vue.use(VueRouter);
 
@@ -8,12 +8,12 @@ const routes = [
   {
     path: '/',
     name: 'AddPlayers',
-    component: Home,
+    component: MatchView,
   },
   {
     path: '/m/:id',
     name: 'Match',
-    component: () => import(/* webpackChunkName: "Match" */ '@/views/MatchView.vue'),
+    component: MatchView,
   },
 ];
 

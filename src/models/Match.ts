@@ -1,5 +1,5 @@
 export default interface Match {
   id: string;
-  urls: string[];
+  steamIds: string[];
   createdAt?: Date;
 }

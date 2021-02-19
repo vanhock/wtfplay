@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import api from '@/helpers/api';
+import api, {cancelRequest, cancelTokenSource} from '@/helpers/api';
 
 Vue.use(Vuex);
 
@@ -11,6 +11,7 @@ export const CLEAR_PLAYERS = 'CLEAR_PLAYERS';
 export const CLEAR_GAMES = 'CLEAR_GAMES';
 export const CREATE_MATCH = 'CREATE_MATCH';
 export const GET_MATCH = 'GET_MATCH';
+export const SET_NAVIGATION_MANUAL = 'SET_NAVIGATION_MANUAL';
 
 const playerPlaceholder = {
   personaname: '',
@@ -27,10 +28,12 @@ const gamePlaceholder = {
 
 export default new Vuex.Store({
   state: {
+    id: null,
     players: [],
     games: [],
     loadingPlayers: false,
     loadingGames: false,
+    isManualNavigated: false
   },
   getters: {
     players: (state) => {
@@ -48,10 +51,12 @@ export default new Vuex.Store({
       return [...state.games, ...placeholder];
     },
     playersCount: (state) => (state.players && state.players.length) || 0,
-    playerUrls: (state) => state.players && state.players.map((p) => p.profileurl),
+    steamIds: (state) => state.players && state.players.map((p) => p.steamid),
     gamesCount: (state) => (state.games && state.games.length) || 0,
     loadingGames: (state) => state.loadingGames,
     loadingPlayers: (state) => state.loadingPlayers,
+    id: (state) => state.id,
+    isManualNavigated: (state) => state.isManualNavigated
   },
   mutations: {
     [SET_LOADING](state, { type = 'Players', loading }) {
@@ -75,44 +80,64 @@ export default new Vuex.Store({
     [CLEAR_GAMES](state) {
       state.games = [];
     },
-    [GET_MATCH](state, { players, games, link }) {
+    [GET_MATCH](state, { players, games, id, isNew = false }) {
       if (players) state.players = players;
       if (games) state.games = games;
-      if (link) state.link = link;
+      if (id) state.id = id;
+      state.isNew = isNew
     },
+    [SET_NAVIGATION_MANUAL] (state, payload) {
+      state.isManualNavigated = payload
+    }
   },
   actions: {
-    async [GET_PLAYERS]({ commit }, payload) {
+    async [GET_PLAYERS]({ commit }, { nicknames, steamIds }) {
       commit(SET_LOADING, { type: 'Players', loading: true });
       try {
-        const players = await api.post('/players/', { urls: payload });
+        const { players, errors } = await api.post(
+          '/players/',
+          {
+            nicknames,
+            steamIds,
+          },
+          { cancelToken: cancelTokenSource.token },
+        );
         if (!players) return;
         commit(GET_PLAYERS, { players });
         commit(SET_LOADING, { type: 'Players', loading: false });
-        return players;
+        return { players, errors };
       } catch (e) {
         commit(SET_LOADING, { type: 'Players', loading: false });
         return Promise.reject(e);
       }
     },
     async [CREATE_MATCH]({ commit, getters }) {
-      commit(SET_LOADING, { type: 'Games', loading: true });
+      cancelRequest();
       try {
-        const response = await api.post('/match/create', {
-          urls: getters.playerUrls,
-        });
-        commit(GET_MATCH, response);
+        const response = await api.post(
+          '/match/create',
+          {
+            steamIds: getters.steamIds,
+          },
+          { cancelToken: cancelTokenSource.token },
+        );
+        commit(GET_MATCH, { ...response, isNew: true });
         commit(SET_LOADING, { type: 'Games', loading: false });
         return response;
       } catch (e) {
+        console.log(e);
         commit(SET_LOADING, { type: 'Games', loading: false });
         return Promise.reject(e);
       }
     },
     async [GET_MATCH]({ commit }, id) {
+      cancelRequest();
       commit(SET_LOADING, { type: 'Games', loading: true });
       try {
-        const response = await api.get('/match/get', { params: { id } });
+        const response = await api.get('/match/get', {
+          params: { id },
+          cancelToken: cancelTokenSource.token,
+        });
         commit(GET_MATCH, response);
         commit(SET_LOADING, { type: 'Games', loading: false });
         return response;

@@ -11,9 +11,20 @@ router.post(
   '/',
   validator(schema.accountUrls),
   asyncHandler(async (req, res) => {
-    const { urls } = req.body;
-    const players = await PlayerService.getPlayers(urls);
-    return new SuccessResponse('success', players).send(res);
+    const { steamIds, nicknames } = req.body;
+    console.log("Got accounts data", req.body);
+    let ids = steamIds;
+    let errors = [];
+    if (nicknames) {
+        try {
+            const steamIdsByNicknames = await PlayerService.getSteamIdsByNicknames(nicknames);
+            ids = [...ids.filter((id:string) => steamIdsByNicknames.indexOf(id) === -1), ...steamIdsByNicknames];
+        } catch (e) {
+            if (e) errors.push(e);
+        }
+    }
+    const players = await PlayerService.getPlayersData(ids);
+    return new SuccessResponse('success', { players, errors }).send(res);
   }),
 );
 

@@ -1,0 +1,5 @@
+{
+  "env": {
+    "VUE_APP_API": "https://wtfplay.ew.r.appspot.com/v1/"
+  }
+}

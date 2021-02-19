@@ -52,16 +52,6 @@ export default class MatchService {
     }
   }
 
-  public static saveMatchToCache(urls: any): Match {
-    const newMatch = {
-      id: nanoid(7),
-      urls: urls,
-      createdAt: new Date(),
-    };
-    memoryCache.set(newMatch.id, newMatch);
-    return newMatch;
-  }
-
   protected static async getCommonGames(steamIds: any, req: any): Promise<any> {
     if (!steamIds || !steamIds.length) return;
     let isCanceled = false;
@@ -79,41 +69,45 @@ export default class MatchService {
     let playerGames: any = [];
 
     for (const steamid of steamIds) {
+      let ownedGames = [];
       try {
-        const { games } = await valveRequest.get('/IPlayerService/GetOwnedGames/v0001/', {
+        const response = await valveRequest.get('/IPlayerService/GetOwnedGames/v0001/', {
           params: { steamid },
         });
-        playerGames = [
-          ...playerGames,
-          [
-            ...games.map((g: any) => ({
-              appid: g.appid,
-              playtime_forever: g.playtime_forever,
-            })),
-          ],
-        ];
+        const {games} = response;
+        if(response && games) ownedGames = games;
       } catch (e) {
         console.log('Catch block', e);
       }
+      playerGames = [
+        ...playerGames,
+        [
+          ...ownedGames.map((g: any) => ({
+            appid: g.appid,
+            playtime_forever: g.playtime_forever,
+          })),
+        ],
+      ];
     }
 
     /**
      * Let's get common games of each player
      **/
+    let commonGames = playerGames.slice(1).reduce((result: any, current: any) => {
+      return current.filter((currentItem: GameIds) => {
+        return result.some(({ appid }: GameIds) => appid === currentItem.appid);
+      });
+    }, playerGames[0]);
 
-    const commonGames = playerGames
-      .slice(1)
-      .reduce((result: any, current: any) => {
-        return current.filter((currentItem: GameIds) => {
-          return result.some(({ appid }: GameIds) => appid === currentItem.appid);
-        });
-      }, playerGames[0])
-      .filter((g: any, i: any) => (matchResultLimit ? i <= matchResultLimit : true));
+    if (commonGames)
+      commonGames = commonGames.filter((g: any, i: any) =>
+        matchResultLimit ? i <= matchResultLimit : true,
+      );
     console.log('commonGames', commonGames);
+
     /**
      * Now add game details
      */
-
     console.log('common games', commonGames.length);
 
     let commonGamesWithDetails: any[] = [];
@@ -124,7 +118,6 @@ export default class MatchService {
     console.log('Has cached', cachedGames.length);
 
     /** Remove cached games from found common games **/
-
     const targetGames = cachedGames.length
       ? commonGames.filter(
           (game: any) =>
@@ -149,8 +142,8 @@ export default class MatchService {
     }
 
     commonGamesWithDetails = [
-      ...commonGamesWithDetails,
       ...cachedGames.filter((g) => isMultiplayer(g)),
+      ...commonGamesWithDetails,
     ];
 
     /**
@@ -171,14 +164,25 @@ export default class MatchService {
       .sort((a: any, b: any) => getYear(b.release_date) - getYear(a.release_date));
   }
 
+  public static saveMatchToCache(steamIds: any): Match {
+    const newMatch = {
+      id: nanoid(7),
+      steamIds: steamIds,
+      createdAt: new Date(),
+    };
+    memoryCache.set(newMatch.id, newMatch);
+    return newMatch;
+  }
+
   public static getMatchFromCacheById(id: any): any {
     return memoryCache.get(id);
   }
 
-  public static async getMatchData(urls: any, req: any): Promise<any> {
+  public static async getMatchData(steamIds: string[], req: any): Promise<any> {
+    /** Applied limiter, which runs requests in the queue **/
     return await limiter.schedule(async () => {
       console.log('Job starts!');
-      const players = await PlayerService.getPlayers(urls);
+      const players = await PlayerService.getPlayersData(steamIds);
       if (!players) throw new NotFoundError('Has no players found');
 
       const games = await MatchService.getCommonGames(

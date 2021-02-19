@@ -10,7 +10,7 @@
           :key="player.steamid || index"
           v-bind="player"
           @remove="removePlayer(player)"
-          :editable="playersEditable"
+          :editable="!!player.steamid"
       />
     </div>
   </div>
@@ -19,20 +19,24 @@
 <script>
 import {mapGetters} from 'vuex';
 import Player from '@/components/modules/Player';
-import {REMOVE_PLAYER} from '@/store';
+import {CLEAR_GAMES, CREATE_MATCH, REMOVE_PLAYER, SET_LOADING} from '@/store';
 
 export default {
   name: 'Players',
   components: {Player},
   computed: {
     ...mapGetters(['players', 'playersCount', 'gamesCount', 'loadingPlayers', 'loadingGames']),
-    playersEditable() {
-      return !this.loadingPlayers && !this.loadingGames && this.$route.name === 'AddPlayers';
-    },
   },
   methods: {
-    removePlayer(player) {
+    async removePlayer(player) {
       this.$store.commit(REMOVE_PLAYER, player);
+      if (this.playersCount > 1) {
+        const {id} = await this.$store.dispatch(CREATE_MATCH);
+        await this.$router.push({name: 'Match', params: {id: id}});
+      } else {
+        this.$store.commit(SET_LOADING, {type: 'Games', loading: false});
+        this.$store.commit(CLEAR_GAMES);
+      }
     },
   },
 };
