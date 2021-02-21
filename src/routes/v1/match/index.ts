@@ -16,8 +16,8 @@ router.get(
     if (!match) throw new NotFoundError('Has no record with specified id');
     const { steamIds } = match;
     console.log('steamIds', steamIds);
-    const { players, games } = await MatchService.getMatchData(steamIds, req);
-    return new SuccessResponse('success', { players, games }).send(res);
+    const { players, games, errors } = await MatchService.getMatchData(steamIds, req);
+    return new SuccessResponse('success', { players, games, errors }).send(res);
   }),
 );
 
@@ -25,12 +25,12 @@ router.post(
   '/create',
   validator(schema.match),
   asyncHandler(async (req, res) => {
-    const { games, players } = await MatchService.getMatchData(req.body.steamIds, req);
+    const { games, players, errors } = await MatchService.getMatchData(req.body.steamIds, req);
 
     /** Store urls in-memory **/
     const { id } = MatchService.saveMatchToCache(players.map((p: Player) => p.steamid));
     console.log('Request was finally end!');
-    return new SuccessResponse('success', { games, id }).send(res);
+    return new SuccessResponse('success', { games, id, errors }).send(res);
   }),
 );
 

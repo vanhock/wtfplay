@@ -58,8 +58,10 @@ export default {
 
   &__name {
     position: absolute;
+    width: 100%;
     top: 100%;
     left: 50%;
+    overflow: hidden;
     transform: translateX(-50%);
     font-size: 14px;
 

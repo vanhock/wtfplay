@@ -5,10 +5,12 @@ export const matchResultLimit = process.env.MATCH_RESULT_LIMIT || 0;
 export const cacheConfig = {
   deleteOnExpire: false,
   useClones: true,
+  checkperiod: 0
 }
 
 export const limiterConfig = {
   maxConcurrent: 1,
+  minTime: 100
 }
 
 export const valveToken = process.env.VALVE_TOKEN || '';

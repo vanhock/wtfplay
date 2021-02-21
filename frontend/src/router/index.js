@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import MatchView from '@/views/MatchView';
+import GamesView from '@/views/GamesView';
 
 Vue.use(VueRouter);
 
@@ -8,12 +8,12 @@ const routes = [
   {
     path: '/',
     name: 'AddPlayers',
-    component: MatchView,
+    component: GamesView,
   },
   {
     path: '/m/:id',
     name: 'Match',
-    component: MatchView,
+    component: GamesView,
   },
 ];
 

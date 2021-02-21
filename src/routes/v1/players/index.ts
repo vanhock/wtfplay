@@ -12,18 +12,7 @@ router.post(
   validator(schema.accountUrls),
   asyncHandler(async (req, res) => {
     const { steamIds, nicknames } = req.body;
-    console.log("Got accounts data", req.body);
-    let ids = steamIds;
-    let errors = [];
-    if (nicknames) {
-        try {
-            const steamIdsByNicknames = await PlayerService.getSteamIdsByNicknames(nicknames);
-            ids = [...ids.filter((id:string) => steamIdsByNicknames.indexOf(id) === -1), ...steamIdsByNicknames];
-        } catch (e) {
-            if (e) errors.push(e);
-        }
-    }
-    const players = await PlayerService.getPlayersData(ids);
+    const { players, errors } = await PlayerService.getPlayers(nicknames, steamIds);
     return new SuccessResponse('success', { players, errors }).send(res);
   }),
 );

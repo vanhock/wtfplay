@@ -106,7 +106,9 @@ export default {
   },
   methods: {
     setLoadingSequence() {
-      let currentIndex = 0;
+      let currentIndex = 1;
+      this.currentText = this.text[currentIndex];
+      this.showText = true;
       this.interval = setInterval(() => {
         this.showText = true;
         this.currentText = this.text[currentIndex];
@@ -141,6 +143,7 @@ export default {
     align-items: center;
     text-align: center;
     height: 100px;
+    max-width: 400px;
     font-weight: bold;
     color: $colorPrime
   }

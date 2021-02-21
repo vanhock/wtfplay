@@ -1,5 +1,5 @@
 <template>
-  <div class="players">
+  <div class="players" ref="players">
     <div class="players__instruction" v-if="!playersCount && !loadingGames">
       Don't know what to play <br/>with your friends in Steam? 😔
       <p><b>👉 Paste profile's links and let's find out! 😍</b></p>
@@ -19,7 +19,8 @@
 <script>
 import {mapGetters} from 'vuex';
 import Player from '@/components/modules/Player';
-import {CLEAR_GAMES, CREATE_MATCH, REMOVE_PLAYER, SET_LOADING} from '@/store';
+import {CLEAR_ERRORS, CLEAR_GAMES, CREATE_MATCH, REMOVE_PLAYER, SET_LOADING} from '@/store';
+import {cancelRequest} from "@/helpers/api";
 
 export default {
   name: 'Players',
@@ -27,15 +28,28 @@ export default {
   computed: {
     ...mapGetters(['players', 'playersCount', 'gamesCount', 'loadingPlayers', 'loadingGames']),
   },
+  watch: {
+    players(current, prev) {
+      if(prev !== current) {
+        this.$nextTick(() => {
+          this.$refs.players.scrollLeft = this.$refs.players.scrollWidth
+        })
+      }
+    }
+  },
   methods: {
     async removePlayer(player) {
       this.$store.commit(REMOVE_PLAYER, player);
+      this.$store.commit(CLEAR_ERRORS, 'players');
       if (this.playersCount > 1) {
-        const {id} = await this.$store.dispatch(CREATE_MATCH);
+        const response = await this.$store.dispatch(CREATE_MATCH);
+        if (!response) return;
+        const {id} = response;
         await this.$router.push({name: 'Match', params: {id: id}});
       } else {
         this.$store.commit(SET_LOADING, {type: 'Games', loading: false});
         this.$store.commit(CLEAR_GAMES);
+        cancelRequest();
       }
     },
   },
@@ -46,7 +60,7 @@ export default {
 .players {
   height: 86px;
   margin-top: 25px;
-  margin-bottom: 20px;
+  padding-bottom: 20px;
   overflow-y: hidden;
 
   &__instruction {
@@ -55,7 +69,7 @@ export default {
 }
 
 .players-list {
-  height: 86px;
+  height: 88px;
   display: flex;
   justify-content: center;
   align-items: center;

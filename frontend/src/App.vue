@@ -3,6 +3,7 @@
     <Logo/>
     <Players/>
     <AddPlayers/>
+    <Errors/>
     <Preloader
         v-show="loadingGames || loadingPlayers"
         :text="loadingText"
@@ -22,9 +23,11 @@ import Preloader from '@/components/primitives/Preloader';
 import {mapGetters} from 'vuex';
 import UpButton from '@/components/primitives/UpButton';
 import AddPlayers from '@/components/modules/AddPlayers';
+import Errors from "@/components/modules/Errors";
+import gameQuotes from "@/helpers/gameQuotes";
 
 export default {
-  components: {AddPlayers, UpButton, Preloader, Logo, Players},
+  components: {Errors, AddPlayers, UpButton, Preloader, Logo, Players},
   created() {
     const matchId =
         (this.$router.history.pending && this.$router.history.pending.params.id) ||
@@ -37,24 +40,12 @@ export default {
     });
   },
   data: () => ({
-    loadingText: [
-      'Finding players',
-      'Looking for perks',
-      'Asking Gordon Freemen',
-      'Opening a portal',
-      'Killing zombie',
-      'Planting the bomb',
-      '3',
-      '2',
-      '1',
-      'Boom!',
-      'Almost there',
-    ],
-    loadingTextDelay: 6000,
-    loadingTextShowDelay: 3000,
+    loadingText: gameQuotes,
+    loadingTextDelay: 9000,
+    loadingTextShowDelay: 7000,
   }),
   computed: {
-    ...mapGetters(['loadingGames', 'loadingPlayers', 'gamesCount', 'id', 'isManualNavigated']),
+    ...mapGetters(['loadingGames', 'loadingPlayers', "playersCount", 'gamesCount', 'id', 'isManualNavigated']),
   },
   methods: {
     async getMatchById(matchId) {
@@ -88,9 +79,20 @@ button {
   appearance: none;
   outline-color: #ccc;
   box-sizing: border-box;
+  user-select: none;
 
   &:active {
     outline: none;
+  }
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+
+  & > * {
+    margin: 0 15px;
   }
 }
 

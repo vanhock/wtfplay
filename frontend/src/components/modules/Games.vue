@@ -3,9 +3,13 @@
     <Game
       v-for="game in games"
       :key="game.steam_appid"
+      :id="game.steam_appid"
       :name="game.name"
       :header_image="game.header_image"
     />
+    <div class="games__empty">
+
+    </div>
   </div>
 </template>
 

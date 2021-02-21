@@ -5,43 +5,48 @@
       <template v-if="showMaxTip">You've reached maximum players</template>
       <template v-else-if="playersCount > 1">added {{ playersCount }} players</template>
     </div>
-    <VInput
-      class="add-players__input"
-      ref="input"
-      v-model="currentValue"
-      placeholder="Paste links of steam profiles..."
-      :invalid="!isInputValid"
-      :disabled="inputDisabled"
+    <VTextArea
+        class="add-players__input"
+        ref="input"
+        v-model="currentValue"
+        placeholder="Paste links of steam profiles..."
+        :invalid="!isInputValid"
+        :disabled="inputDisabled"
+        @submit="getPlayers"
+        @clear="handleInputClear"
     />
-    <div class="add-players__buttons">
+    <div class="buttons">
       <VButton class="add-players__submit" :disabled="buttonDisabled" @click="getPlayers"
-        >Add players
+      >Add players
       </VButton>
       <VButtonOutline v-show="gamesCount" :disabled="loadingGames" @click="copyToClipboard"
-        >Copy link</VButtonOutline
-      >
+      >Copy link
+      </VButtonOutline>
     </div>
     <div class="copied" v-show="copied">Copied to clipboard</div>
   </div>
 </template>
 
 <script>
+import {debounce} from "lodash";
 import VButton from '@/components/primitives/VButton';
-import {CLEAR_PLAYERS, CREATE_MATCH, GET_PLAYERS, SET_NAVIGATION_MANUAL} from '@/store';
-import { mapGetters } from 'vuex';
-import VInput from '@/components/primitives/VInput';
+import {CREATE_MATCH, GET_PLAYERS, SET_NAVIGATION_MANUAL} from '@/store';
+import {mapGetters} from 'vuex';
 import VButtonOutline from '@/components/primitives/VButtonOutline';
+import VTextArea from "@/components/primitives/VTextArea";
+import {shallowEqualArrays} from "@/helpers/helpers";
 
 export default {
   name: 'AddPlayers',
-  components: { VButtonOutline, VInput, VButton },
+  components: {VTextArea, VButtonOutline, VButton},
   mounted() {
     this.focusInput();
   },
   data: () => ({
     currentValue: null,
     isInputValid: true,
-    links: [],
+    addedNickNames: [],
+    addedIds: [],
     errorMessage: null,
     copied: false,
   }),
@@ -61,31 +66,38 @@ export default {
     },
   },
   methods: {
-    async getPlayers() {
+    getPlayers: debounce(async function () {
+      console.log("add player call");
       if (!this.currentValue || !this.currentValue) return;
       this.isInputValid = true;
       this.errorMessage = null;
       const data = this.resolveInputData();
+      const {steamIds, nicknames} = data;
+      if (shallowEqualArrays(steamIds, this.addedIds) && shallowEqualArrays(nicknames, this.addedNickNames)) {
+        return;
+      }
+      this.focusInput();
       try {
-        const { errors } = await this.$store.dispatch(GET_PLAYERS, data);
+        const {errors} = await this.$store.dispatch(GET_PLAYERS, data);
         if (errors && errors.length) this.errorMessage = errors.join(', ');
+        this.addedNickNames = nicknames;
+        this.addedIds = steamIds;
         if (this.playersCount > 1) {
-          const { id } = await this.$store.dispatch(CREATE_MATCH);
+          const {id} = await this.$store.dispatch(CREATE_MATCH);
           this.$store.commit(SET_NAVIGATION_MANUAL, true);
-          await this.$router.push({ name: 'Match', params: { id: id } });
+          await this.$router.push({name: 'Match', params: {id: id}});
         }
       } catch (e) {
         this.errorMessage = e;
         this.isInputValid = false;
       }
-    },
+    }, 100),
     resolveInputData() {
-      const dataArray = this.currentValue.includes(',')
-        ? this.currentValue.trim().split(',')
-        : this.currentValue.trim().split(' ');
+      const dataArray = this.currentValue.trim().replace(/\r?\n|\r/g, ',').split(',');
       const nicknames = [];
       const steamIds = [];
       for (const item of dataArray) {
+        if (!item) continue;
         const formattedItem = this.formatInputData(item);
         const isSteamId = formattedItem.match(/(^\d{17}$)/gm); // Test on 64bit SteamId
         if (isSteamId) {
@@ -95,25 +107,22 @@ export default {
         }
       }
 
-      return { nicknames, steamIds };
+      return {nicknames, steamIds};
     },
     formatInputData(data) {
       return (
-        data &&
-        data
-          .trim()
-          .replace('https://steamcommunity.com/id/', '')
-          .replace('https://steamcommunity.com/profiles/', '')
-          .split('/')[0]
-          .split('?')[0]
+          data &&
+          data
+              .trim()
+              .replace('https://steamcommunity.com/id/', '')
+              .replace('https://steamcommunity.com/profiles/', '')
+              .split('/')[0]
+              .split('?')[0]
       );
-    },
-    clearPlayers() {
-      this.$store.commit(CLEAR_PLAYERS);
     },
     focusInput() {
       this.$nextTick(() => {
-        this.$refs.input.setFocus();
+        this.$refs.input && this.$refs.input.setFocus();
       });
     },
     copyToClipboard() {
@@ -126,21 +135,16 @@ export default {
       this.copied = true;
       setTimeout(() => (this.copied = false), 2500);
     },
+    handleInputClear() {
+      this.addedNickNames = [];
+      this.addedIds = [];
+    }
   },
 };
 </script>
 
 <style lang="scss" scoped>
 .add-players {
-  &__buttons {
-    display: flex;
-    justify-content: center;
-    margin: 0 auto;
-
-    & > * {
-      margin: 0 15px;
-    }
-  }
 
   &__input {
     display: flex;

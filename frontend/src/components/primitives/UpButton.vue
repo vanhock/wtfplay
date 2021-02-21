@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { debounce } from '@/helpers/helpers';
+import {debounce} from 'lodash';
 
 export default {
   name: 'UpButton',
@@ -20,11 +20,10 @@ export default {
   methods: {
     handleScroll() {
       const scroll = document.scrollingElement.scrollTop;
-      console.log('scroll', scroll);
       this.show = scroll > 500;
     },
     handleClick() {
-      document.querySelector('html').scrollIntoView({ behavior: 'smooth' });
+      document.querySelector('html').scrollIntoView({behavior: 'smooth'});
     },
   },
 };
