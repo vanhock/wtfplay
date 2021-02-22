@@ -44,5 +44,6 @@ export default {
   background-size: 50%;
   background-repeat: no-repeat;
   cursor: pointer;
+  z-index: 15;
 }
 </style>

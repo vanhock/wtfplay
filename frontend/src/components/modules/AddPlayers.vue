@@ -5,15 +5,13 @@
       <template v-if="showMaxTip">You've reached maximum players</template>
       <template v-else-if="playersCount > 1">added {{ playersCount }} players</template>
     </div>
-    <VTextArea
+    <VInput
         class="add-players__input"
         ref="input"
         v-model="currentValue"
         placeholder="Paste links of steam profiles..."
-        :invalid="!isInputValid"
         :disabled="inputDisabled"
         @submit="getPlayers"
-        @clear="handleInputClear"
     />
     <div class="buttons">
       <VButton class="add-players__submit" :disabled="buttonDisabled" @click="getPlayers"
@@ -33,20 +31,17 @@ import VButton from '@/components/primitives/VButton';
 import {CREATE_MATCH, GET_PLAYERS, SET_NAVIGATION_MANUAL} from '@/store';
 import {mapGetters} from 'vuex';
 import VButtonOutline from '@/components/primitives/VButtonOutline';
-import VTextArea from "@/components/primitives/VTextArea";
-import {shallowEqualArrays} from "@/helpers/helpers";
+import VInput from "@/components/primitives/VInput";
 
 export default {
   name: 'AddPlayers',
-  components: {VTextArea, VButtonOutline, VButton},
+  components: {VInput, VButtonOutline, VButton},
   mounted() {
     this.focusInput();
   },
   data: () => ({
     currentValue: null,
     isInputValid: true,
-    addedNickNames: [],
-    addedIds: [],
     errorMessage: null,
     copied: false,
   }),
@@ -68,20 +63,15 @@ export default {
   methods: {
     getPlayers: debounce(async function () {
       console.log("add player call");
-      if (!this.currentValue || !this.currentValue) return;
+      if (!this.currentValue) return;
       this.isInputValid = true;
       this.errorMessage = null;
       const data = this.resolveInputData();
-      const {steamIds, nicknames} = data;
-      if (shallowEqualArrays(steamIds, this.addedIds) && shallowEqualArrays(nicknames, this.addedNickNames)) {
-        return;
-      }
+      this.currentValue = null;
       this.focusInput();
       try {
         const {errors} = await this.$store.dispatch(GET_PLAYERS, data);
         if (errors && errors.length) this.errorMessage = errors.join(', ');
-        this.addedNickNames = nicknames;
-        this.addedIds = steamIds;
         if (this.playersCount > 1) {
           const {id} = await this.$store.dispatch(CREATE_MATCH);
           this.$store.commit(SET_NAVIGATION_MANUAL, true);
@@ -91,9 +81,10 @@ export default {
         this.errorMessage = e;
         this.isInputValid = false;
       }
+
     }, 100),
     resolveInputData() {
-      const dataArray = this.currentValue.trim().replace(/\r?\n|\r/g, ',').split(',');
+      const dataArray = this.currentValue.includes(",") ? this.currentValue.trim().split(',') : this.currentValue.trim().split(' ');
       const nicknames = [];
       const steamIds = [];
       for (const item of dataArray) {
@@ -135,10 +126,6 @@ export default {
       this.copied = true;
       setTimeout(() => (this.copied = false), 2500);
     },
-    handleInputClear() {
-      this.addedNickNames = [];
-      this.addedIds = [];
-    }
   },
 };
 </script>

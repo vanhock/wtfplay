@@ -7,6 +7,7 @@
       v-model="inputValue"
       :type="type"
       :placeholder="placeholder"
+      @keydown="handleKeydown"
     />
   </label>
 </template>
@@ -41,6 +42,9 @@ export default {
   methods: {
     setFocus() {
       this.$refs.input.focus();
+    },
+    handleKeydown(e) {
+      if (e.keyCode === 13) this.$emit('submit');
     },
   },
 };
