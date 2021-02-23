@@ -36,7 +36,7 @@ export default {
   &:hover {
     a {
       @media (min-width: $mobile) {
-        transform: scale(1.05);
+        transform: scale(1.06);
         z-index: 2;
       }
     }
